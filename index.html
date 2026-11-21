@@ -51,7 +51,7 @@
   .more { display: block; margin: 16px auto 0; padding: 12px 20px; border-radius: 10px; border: 1px solid #ddd3c4; background: #fff; font-family: inherit; font-size: 16px; color: #3a3a3a; cursor: pointer; }
   .gempty { text-align: center; color: #a09584; font-size: 15px; padding: 18px 0; font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
   /* Lightbox */
-  .lb { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.92); z-index: 50; }
+  .lb { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 50; }
   .lb.on { display: block; }
   .lb .stage { position: absolute; top: 50px; left: 0; right: 0; bottom: 70px; display: -webkit-box; display: flex; -webkit-box-align: center; align-items: center; -webkit-box-pack: center; justify-content: center; }
   .lb img { max-width: 100%; max-height: 100%; }
@@ -328,7 +328,7 @@
   var grid = $('grid'), gempty = $('gempty'), moreBtn = $('more');
 
   function thumbUrl(id, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w; }
-  function bigUrl(id) { return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w2000'; }
+  function bigUrl(id) { return thumbUrl(id, 2000); }
   function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
   function whoText(it) { return it.guest ? it.guest : 'A guest'; }
   function whenText(it) {
@@ -386,7 +386,7 @@
       lbStage.appendChild(f);
     } else {
       var img = new Image();
-      img.onerror = function () { img.onerror = null; img.src = thumbUrl(it.id, 1600); };
+      img.onerror = function () { img.onerror = null; img.src = thumbUrl(it.id, 1000); };
       img.src = bigUrl(it.id);
       lbStage.appendChild(img);
     }
