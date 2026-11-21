@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Share the Love - Upload Photos &amp; Videos</title>
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { margin: 0; font-family: Georgia, 'Times New Roman', serif; background: #faf7f2; color: #3a3a3a; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 28px 20px 48px; padding-bottom: calc(48px + env(safe-area-inset-bottom)); text-align: center; }
+  h1 { font-size: 34px; margin: 8px 0 4px; font-weight: normal; letter-spacing: .5px; }
+  .sub { color: #8a7f72; margin: 0 0 24px; font-size: 17px; line-height: 1.4; }
+  input[type=text] { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ddd3c4; border-radius: 10px; background: #fff; margin-bottom: 14px; font-family: inherit; -webkit-appearance: none; appearance: none; }
+  .pick { position: relative; display: block; width: 100%; padding: 18px; font-size: 18px; border-radius: 12px; background: #b08d57; color: #fff; cursor: pointer; overflow: hidden; }
+  .pick.busy { background: #cbbfae; pointer-events: none; }
+  .pick input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 200px; }
+  .box { display: none; margin-top: 18px; padding: 14px; border-radius: 10px; font-size: 15px; line-height: 1.45; font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; text-align: left; }
+  .box.on { display: block; }
+  .box b.h { display: block; font-size: 16px; margin-bottom: 4px; }
+  .banner { background: #fff4df; border: 1px solid #ecd3a3; color: #7a5a1e; }
+  .inapp { background: #eef3fb; border: 1px solid #c9d8ef; color: #2d4a73; margin: 0 0 18px; }
+  .btn2 { display: inline-block; margin: 10px 8px 0 0; padding: 10px 14px; border-radius: 8px; background: #2d4a73; color: #fff; text-decoration: none; font-size: 15px; border: 0; font-family: inherit; cursor: pointer; }
+  .btn2.light { background: #fff; color: #2d4a73; border: 1px solid #c9d8ef; }
+  .list { margin-top: 18px; text-align: left; }
+  .item { background: #fff; border: 1px solid #eee5d8; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 14px; }
+  .row { display: -webkit-box; display: flex; -webkit-box-pack: justify; justify-content: space-between; }
+  .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; padding-right: 8px; }
+  .st { flex-shrink: 0; color: #8a7f72; }
+  .bar { height: 6px; background: #f1ebe2; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .fill { height: 100%; width: 0; background: #b08d57; -webkit-transition: width .2s; transition: width .2s; }
+  .ok .fill { background: #6a9a6a; } .ok .st { color: #4f7f4f; }
+  .err .fill { background: #c0584f; } .err .st { color: #c0584f; }
+  .msg { margin-top: 18px; font-size: 17px; min-height: 22px; line-height: 1.4; }
+  .note { margin-top: 22px; font-size: 13px; color: #a09584; line-height: 1.5; font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Share the Love</h1>
+  <p class="sub">Help us capture every moment &mdash; upload your photos &amp; videos</p>
+
+  <!-- Shown only when opened inside an app's built-in browser (Messenger, Facebook, Instagram, QR scanner apps...) -->
+  <div class="box inapp" id="inapp">
+    <b class="h">Tip: open in your phone's browser</b>
+    <span id="inappText">You opened this inside another app. Uploading usually works here too, but if the button doesn't open your photos, tap Open in Browser.</span><br>
+    <a class="btn2" id="openBrowser" href="#">Open in Browser</a>
+    <button class="btn2 light" id="copyLink" type="button">Copy Link</button>
+  </div>
+
+  <input type="text" id="guest" placeholder="Your name (optional)" maxlength="40" autocomplete="name">
+  <label class="pick" id="pick">
+    <span id="pickText">Choose Photos &amp; Videos</span>
+    <input type="file" id="files" accept="image/*,video/*,.heic,.heif,.mov,.mp4" multiple>
+  </label>
+
+  <div class="box banner" id="banner">
+    <b class="h">Uploading&hellip; please don't close this page</b>
+    Keep your screen on and stay on this page until every file shows &#10003;. If you switch apps, come back and it will keep going.
+  </div>
+
+  <div class="msg" id="msg"></div>
+  <div class="list" id="list"></div>
+  <p class="note">Works on any phone browser &mdash; no app or sign-in needed.<br>Large videos may take a few minutes on slow Wi-Fi.</p>
+</div>
+
+<script>
+  // Plain ES5 so it also runs on older iPhones/Androids and in-app browsers.
+  var API_URL = 'https://script.google.com/macros/s/AKfycbwiatSZRLEjzvMklBoptEvmXDb_NiC_IwGvSkRdZzHmJUD_GPKgZQzYwRZagVrhQOhl5g/exec';
+  var PAGE_URL = String(location.href).split('#')[0].split('?')[0];
+  var CHUNK = 2 * 1024 * 1024;   // 2 MB pieces (multiple of 256 KB, required by Drive)
+  var MAX_TRIES = 10;            // retries per piece
+
+  function $(id) { return document.getElementById(id); }
+  var filesInput = $('files'), pick = $('pick'), pickText = $('pickText'), banner = $('banner');
+  var msg = $('msg'), list = $('list');
+  var uploading = false;
+
+  function setClass(el, c, on) {
+    var cur = ' ' + el.className + ' ', has = cur.indexOf(' ' + c + ' ') > -1;
+    if (on && !has) el.className += ' ' + c;
+    if (!on && has) el.className = cur.replace(' ' + c + ' ', ' ').replace(/^\s+|\s+$/g, '');
+  }
+
+  // ---------- Device / in-app browser detection ----------
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(ua);
+  var inApp = /FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Line\/|MicroMessenger|Viber|TikTok|musical_ly|Snapchat|Twitter|LinkedInApp|KAKAOTALK|GSA\//i.test(ua)
+           || (isAndroid && /; wv\)/.test(ua));
+  if (inApp && (isIOS || isAndroid)) {
+    var ob = $('openBrowser');
+    if (isAndroid) {
+      // Opens the phone's default browser (Chrome, Samsung Internet, etc.)
+      ob.href = 'intent://' + PAGE_URL.replace(/^https:\/\//, '') + '#Intent;scheme=https;end';
+    } else {
+      // iPhone: jumps straight to Safari on recent iOS; text explains the manual way too
+      ob.href = 'x-safari-' + PAGE_URL;
+      ob.textContent = 'Open in Safari';
+      $('inappText').innerHTML = 'You opened this inside another app. Uploading usually works here too, but if the button doesn\'t open your photos, tap Open in Safari &mdash; or tap &middot;&middot;&middot; / the share icon and choose <b>Open in Safari</b>.';
+    }
+    setClass($('inapp'), 'on', true);
+  }
+  $('copyLink').onclick = function () {
+    function done() { $('copyLink').textContent = 'Copied! Paste in your browser'; }
+    function fallbackCopy() {
+      var t = document.createElement('textarea');
+      t.value = PAGE_URL; t.setAttribute('readonly', ''); t.style.position = 'absolute'; t.style.left = '-9999px';
+      document.body.appendChild(t); t.select();
+      try { t.setSelectionRange(0, 99999); } catch (e) {}
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(t);
+      if (ok) done(); else window.prompt('Copy this link:', PAGE_URL);
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(PAGE_URL).then(done, fallbackCopy);
+      else fallbackCopy();
+    } catch (e) { fallbackCopy(); }
+  };
+
+  // ---------- Keep screen awake while uploading (where supported) ----------
+  var wakeLock = null;
+  function lockScreen() {
+    try {
+      if ('wakeLock' in navigator && document.visibilityState === 'visible') {
+        navigator.wakeLock.request('screen').then(function (l) { wakeLock = l; })['catch'](function () {});
+      }
+    } catch (e) {}
+  }
+  function unlockScreen() { try { if (wakeLock) wakeLock.release(); } catch (e) {} wakeLock = null; }
+  document.addEventListener('visibilitychange', function () {
+    if (uploading && document.visibilityState === 'visible') lockScreen();
+  });
+  window.addEventListener('beforeunload', function (e) {
+    if (uploading) { e.preventDefault(); e.returnValue = ''; return ''; }
+  });
+
+  function setBusy(on) {
+    uploading = on;
+    setClass(pick, 'busy', on);
+    setClass(banner, 'on', on);
+    pickText.textContent = on ? 'Uploading…' : 'Choose More Photos & Videos';
+    if (on) lockScreen(); else unlockScreen();
+  }
+
+  filesInput.onchange = function () {
+    var files = Array.prototype.slice.call(filesInput.files || []);
+    try { filesInput.value = ''; } catch (e) {}
+    if (!files.length || uploading) return;
+    startBatch(files);
+  };
+
+  function startBatch(files) {
+    setBusy(true);
+    msg.textContent = 'Uploading ' + files.length + ' file' + (files.length > 1 ? 's' : '') + '…';
+    var guest = $('guest').value;
+    var items = files.map(addItem);
+    var ok = 0;
+    var chain = Promise.resolve();
+    files.forEach(function (f, i) {
+      chain = chain.then(function () {
+        var el = items[i];
+        return uploadFile(f, guest, el).then(function () {
+          el.className = 'item ok'; setStatus(el, '✓ Done', 100); ok++;
+        }, function () {
+          el.className = 'item err'; setStatus(el, 'Failed', null);
+        });
+      });
+    });
+    chain.then(function () {
+      setBusy(false);
+      msg.textContent = ok === files.length
+        ? 'Thank you! ' + ok + ' file' + (ok > 1 ? 's' : '') + ' uploaded ❤'
+        : ok + ' of ' + files.length + ' uploaded. Please choose the failed ones again.';
+    });
+  }
+
+  function addItem(f) {
+    var el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<div class="row"><span class="name"></span><span class="st">Waiting</span></div><div class="bar"><div class="fill"></div></div>';
+    el.querySelector('.name').textContent = f.name || 'file';
+    list.insertBefore(el, list.firstChild);
+    return el;
+  }
+
+  function setStatus(el, text, pct) {
+    el.querySelector('.st').textContent = text;
+    if (pct !== null) el.querySelector('.fill').style.width = pct + '%';
+  }
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function waitVisible() {
+    return new Promise(function (res) {
+      (function chk() { if (document.visibilityState === 'hidden') setTimeout(chk, 1000); else res(); })();
+    });
+  }
+
+  // Talks to the Google Apps Script storage backend. Sent as text/plain so there is
+  // no CORS preflight; uses XMLHttpRequest for the widest phone/browser support.
+  function api(body) {
+    return new Promise(function (res, rej) {
+      var x = new XMLHttpRequest();
+      x.open('POST', API_URL, true);
+      x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
+      x.timeout = 120000;
+      x.onload = function () {
+        var r = null;
+        try { r = JSON.parse(x.responseText); } catch (e) {}
+        if (x.status === 200 && r && r.ok) res(r); else rej(new Error((r && r.error) || ('HTTP ' + x.status)));
+      };
+      x.onerror = function () { rej(new Error('network')); };
+      x.ontimeout = function () { rej(new Error('timeout')); };
+      x.send(JSON.stringify(body));
+    });
+  }
+
+  // Retry with growing waits (2s, 4s ... up to 20s); pauses while the page is in the background.
+  function withRetry(fn, el, label) {
+    var t = 0;
+    function attempt() {
+      t++;
+      return fn()['catch'](function (e) {
+        if (t >= MAX_TRIES) throw e;
+        setStatus(el, 'Weak signal, retrying…', null);
+        return sleep(Math.min(2000 * t, 20000)).then(waitVisible).then(function () {
+          setStatus(el, label(), null);
+          return attempt();
+        });
+      });
+    }
+    return attempt();
+  }
+
+  function readB64(blob) {
+    return new Promise(function (res, rej) {
+      var r = new FileReader();
+      r.onload = function () { var s = String(r.result); res(s.substring(s.indexOf(',') + 1)); };
+      r.onerror = function () { rej(r.error); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  function guessType(f) {
+    if (f.type) return f.type;
+    var ext = ((f.name || '').split('.').pop() || '').toLowerCase();
+    return ({ heic: 'image/heic', heif: 'image/heif', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+              mov: 'video/quicktime', mp4: 'video/mp4', m4v: 'video/x-m4v', '3gp': 'video/3gpp', webm: 'video/webm' })[ext]
+           || 'application/octet-stream';
+  }
+
+  function uploadFile(f, guest, el) {
+    var total = f.size, pct = 0;
+    function label() { return pct + '%'; }
+    if (!total) return Promise.reject(new Error('empty'));
+    var slice = f.slice || f.webkitSlice || f.mozSlice;
+    setStatus(el, '0%', 0);
+    return withRetry(function () { return api({ action: 'start', name: f.name || 'file', type: guessType(f), size: total, guest: guest }); }, el, label)
+      .then(function (r) {
+        var session = r.session;
+        var start = 0;
+        function next() {
+          if (start >= total) return Promise.resolve();
+          var s = start, end = Math.min(start + CHUNK, total);
+          return readB64(slice.call(f, s, end))
+            .then(function (b64) {
+              return withRetry(function () { return api({ action: 'chunk', session: session, data: b64, start: s, total: total }); }, el, label);
+            })
+            .then(function () {
+              start = end;
+              pct = Math.round(end / total * 100);
+              setStatus(el, pct + '%', pct);
+              return next();
+            });
+        }
+        return next();
+      });
+  }
+</script>
+</body>
+</html>
