@@ -328,7 +328,43 @@
   var grid = $('grid'), gempty = $('gempty'), moreBtn = $('more');
 
   function thumbUrl(id, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w; }
-  function bigUrl(id) { return thumbUrl(id, 2000); }
+  function lh3(id, sz) { return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=' + sz; }
+  function loadCors(src) {
+    return new Promise(function (res, rej) {
+      var i = new Image(); i.crossOrigin = 'anonymous';
+      i.onload = function () { res(i); }; i.onerror = rej; i.src = src;
+    });
+  }
+  // Google's small previews are upright but large copies lose the phone's rotation info.
+  // Compare the large copy to the upright small one, find the rotation that matches, and apply it.
+  function orientedBig(id) {
+    return Promise.all([loadCors(lh3(id, 'w480')), loadCors(lh3(id, 'w1600'))]).then(function (r) {
+      var small = r[0], big = r[1], N = 16;
+      var c = document.createElement('canvas'); c.width = N; c.height = N;
+      var x = c.getContext('2d');
+      function sig(img, k) {
+        x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, N, N);
+        x.translate(N / 2, N / 2); x.rotate(k * Math.PI / 2); x.drawImage(img, -N / 2, -N / 2, N, N);
+        var d = x.getImageData(0, 0, N, N).data, out = [];
+        for (var j = 0; j < d.length; j += 4) out.push(d[j] * 0.3 + d[j + 1] * 0.59 + d[j + 2] * 0.11);
+        return out;
+      }
+      var ref = sig(small, 0), best = 0, bestScore = Infinity;
+      var smallPortrait = small.naturalHeight > small.naturalWidth, bigPortrait = big.naturalHeight > big.naturalWidth;
+      for (var k = 0; k < 4; k++) {
+        if ((k % 2 === 1) === (smallPortrait === bigPortrait)) continue; // rotation must match the aspect ratio
+        var s2 = sig(big, k), score = 0;
+        for (var m = 0; m < ref.length; m++) score += Math.abs(ref[m] - s2[m]);
+        if (score < bestScore) { bestScore = score; best = k; }
+      }
+      if (best === 0) return big.src;
+      var w = big.naturalWidth, h = big.naturalHeight, cv = document.createElement('canvas');
+      cv.width = best % 2 ? h : w; cv.height = best % 2 ? w : h;
+      var cx = cv.getContext('2d');
+      cx.translate(cv.width / 2, cv.height / 2); cx.rotate(best * Math.PI / 2); cx.drawImage(big, -w / 2, -h / 2);
+      return cv.toDataURL('image/jpeg', 0.9);
+    });
+  }
   function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
   function whoText(it) { return it.guest ? it.guest : 'A guest'; }
   function whenText(it) {
@@ -386,9 +422,10 @@
       lbStage.appendChild(f);
     } else {
       var img = new Image();
-      img.onerror = function () { img.onerror = null; img.src = thumbUrl(it.id, 1000); };
-      img.src = bigUrl(it.id);
+      img.style.imageOrientation = 'none';
+      img.src = thumbUrl(it.id, 500);            // upright preview shows instantly
       lbStage.appendChild(img);
+      orientedBig(it.id).then(function (src) { if (gal.idx === i) img.src = src; }, function () {});
     }
     lbCap.innerHTML = 'Shared by ' + esc(whoText(it)) + '<small>' + esc(whenText(it)) + '</small>';
     setClass(lb, 'on', true);
