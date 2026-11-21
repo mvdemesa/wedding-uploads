@@ -104,6 +104,45 @@
   .lb .x { top: 8px; top: calc(8px + env(safe-area-inset-top)); right: 10px; }
   .lb .nav { top: 50%; margin-top: -22px; }
   .lb .prev { left: 8px; } .lb .next { right: 8px; }
+  .lb .stage { bottom: 132px; }
+
+  /* ---------- Hearts & comments ---------- */
+  .tile .by { display: -webkit-box; display: flex; -webkit-box-align: end; align-items: flex-end; }
+  .tile .by .bn { -webkit-box-flex: 1; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tile .by .rx { flex-shrink: 0; margin-left: 6px; font-style: normal; font-size: 12px; color: var(--gold-bright); white-space: nowrap; }
+  .acts { display: -webkit-box; display: flex; -webkit-box-pack: center; justify-content: center; margin-top: 10px; }
+  .act { display: -webkit-inline-box; display: inline-flex; -webkit-box-align: center; align-items: center; background: transparent; border: 0; color: var(--ivory);
+         font-family: var(--serif); font-size: 17px; padding: 6px 14px; cursor: pointer; }
+  .act svg { width: 28px; height: 28px; margin-right: 7px; }
+  .act .hp { fill: none; stroke: var(--ivory); stroke-width: 1.8; -webkit-transition: fill .2s, stroke .2s; transition: fill .2s, stroke .2s; }
+  .act.on .hp { fill: #e0465e; stroke: #e0465e; }
+  .act.pop svg { -webkit-animation: pop .35s ease; animation: pop .35s ease; }
+  .act .cp { fill: none; stroke: var(--ivory); stroke-width: 1.8; stroke-linejoin: round; }
+  @-webkit-keyframes pop { 0% { -webkit-transform: scale(1); } 40% { -webkit-transform: scale(1.35); } 100% { -webkit-transform: scale(1); } }
+  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+  .burst { position: absolute; top: 50%; left: 50%; width: 110px; height: 110px; margin: -55px 0 0 -55px; pointer-events: none; opacity: 0; z-index: 3; }
+  .burst path { fill: #fff; filter: drop-shadow(0 2px 10px rgba(0,0,0,.45)); }
+  .burst.go { -webkit-animation: burst .9s ease forwards; animation: burst .9s ease forwards; }
+  @-webkit-keyframes burst { 0% { opacity: 0; -webkit-transform: scale(.3); } 15% { opacity: .95; -webkit-transform: scale(1.1); } 30% { -webkit-transform: scale(.95); } 70% { opacity: .95; -webkit-transform: scale(1); } 100% { opacity: 0; -webkit-transform: scale(1.2); } }
+  @keyframes burst { 0% { opacity: 0; transform: scale(.3); } 15% { opacity: .95; transform: scale(1.1); } 30% { transform: scale(.95); } 70% { opacity: .95; transform: scale(1); } 100% { opacity: 0; transform: scale(1.2); } }
+  .cpanel { display: none; position: absolute; left: 0; right: 0; bottom: 0; max-height: 72%; z-index: 5; background: #2A060D; border-top: 1px solid rgba(201,162,75,.45);
+            border-radius: 14px 14px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.5); text-align: left; }
+  .cpanel.on { display: -webkit-box; display: flex; -webkit-box-orient: vertical; flex-direction: column; }
+  .cp-head { padding: 14px 16px 10px; text-align: center; border-bottom: 1px solid rgba(201,162,75,.18); position: relative; }
+  .cp-head .eyebrow { margin: 0; }
+  .cp-x { position: absolute; right: 10px; top: 6px; background: transparent; border: 0; color: var(--gold-bright); font-size: 26px; cursor: pointer; padding: 4px 8px; }
+  .cp-list { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 16px; -webkit-box-flex: 1; flex: 1; min-height: 80px; }
+  .cm { padding: 9px 0; border-bottom: 1px solid rgba(201,162,75,.1); font-size: 16px; line-height: 1.4; color: var(--ivory); word-wrap: break-word; }
+  .cm b { color: var(--gold-bright); font-weight: 600; margin-right: 6px; }
+  .cm small { display: block; color: rgba(246,239,228,.45); font-size: 12px; margin-top: 2px; }
+  .cp-empty { color: rgba(246,239,228,.5); font-style: italic; padding: 14px 0; text-align: center; }
+  .cp-form { padding: 10px 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(201,162,75,.18); }
+  .cp-form input[type=text] { margin: 0 0 8px; text-align: left; padding: 11px 13px; }
+  .cp-row { display: -webkit-box; display: flex; }
+  .cp-row input[type=text] { -webkit-box-flex: 1; flex: 1; margin: 0; }
+  .cp-send { margin-left: 8px; padding: 0 16px; border: 1px solid var(--gold); background: rgba(201,162,75,.14); color: var(--gold-bright); border-radius: 2px;
+             font-family: var(--serif); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; cursor: pointer; }
+  .cp-send[disabled] { opacity: .5; }
 </style>
 </head>
 <body>
@@ -161,7 +200,31 @@
   <button class="nav prev" id="lbPrev" type="button" aria-label="Previous">&#8249;</button>
   <button class="nav next" id="lbNext" type="button" aria-label="Next">&#8250;</button>
   <div class="stage" id="lbStage"></div>
-  <div class="cap" id="lbCap"></div>
+  <svg class="burst" id="burst" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+  <div class="cap">
+    <div id="lbCap"></div>
+    <div class="acts">
+      <button class="act" id="heartBtn" type="button" aria-label="Heart">
+        <svg viewBox="0 0 24 24"><path class="hp" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <span id="heartN">0</span>
+      </button>
+      <button class="act" id="comBtn" type="button" aria-label="Comments">
+        <svg viewBox="0 0 24 24"><path class="cp" d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.8L3 21l1.9-4.6A8.4 8.4 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z"/></svg>
+        <span id="comN">0</span>
+      </button>
+    </div>
+  </div>
+  <div class="cpanel" id="cpanel">
+    <div class="cp-head"><p class="eyebrow">Comments</p><button class="cp-x" id="cpX" type="button" aria-label="Close comments">&times;</button></div>
+    <div class="cp-list" id="cpList"></div>
+    <form class="cp-form" id="cpForm" autocomplete="off">
+      <input type="text" id="cpName" maxlength="40" placeholder="Your name">
+      <div class="cp-row">
+        <input type="text" id="cpText" maxlength="300" placeholder="Add a sweet comment&hellip;">
+        <button class="cp-send" id="cpSend" type="submit">Post</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -439,7 +502,9 @@
     img.src = thumbUrl(it.id, 500);
     t.querySelector('.ph').appendChild(img);
     if (it.video) { var p = document.createElement('span'); p.className = 'play'; p.innerHTML = '&#9654;'; t.querySelector('.ph').appendChild(p); }
-    t.querySelector('.by').textContent = 'by ' + whoText(it);
+    t.querySelector('.by').innerHTML = '<span class="bn"></span><span class="rx"></span>';
+    t.querySelector('.bn').textContent = 'by ' + whoText(it);
+    it.tile = t; updateTile(it);
     t.onclick = function () { openLb(i); };
     grid.appendChild(t);
   }
@@ -483,28 +548,121 @@
       orientedBig(it.id).then(function (src) { if (gal.idx === i) img.src = src; }, function () {});
     }
     lbCap.innerHTML = '<div class="who">' + esc(whoText(it)) + '</div><small>Shared ' + esc(whenText(it)) + '</small>';
+    closePanel(); renderActs(it);
     setClass(lb, 'on', true);
     document.body.style.overflow = 'hidden';
   }
-  function closeLb() { setClass(lb, 'on', false); lbStage.innerHTML = ''; document.body.style.overflow = ''; }
+  function closeLb() { closePanel(); setClass(lb, 'on', false); lbStage.innerHTML = ''; document.body.style.overflow = ''; }
   $('lbX').onclick = closeLb;
   $('lbPrev').onclick = function (e) { e.stopPropagation(); openLb(gal.idx - 1); };
   $('lbNext').onclick = function (e) { e.stopPropagation(); openLb(gal.idx + 1); };
-  lb.onclick = function (e) { if (e.target === lb || e.target === lbStage) closeLb(); };
+  lb.onclick = function (e) { if (e.target === lb) closeLb(); };
   document.addEventListener('keydown', function (e) {
     if (!/\bon\b/.test(lb.className)) return;
+    if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
     if (e.key === 'Escape') closeLb();
     if (e.key === 'ArrowLeft') openLb(gal.idx - 1);
     if (e.key === 'ArrowRight') openLb(gal.idx + 1);
   });
   // swipe on phones
   var sx = null;
-  lb.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+  lb.addEventListener('touchstart', function (e) { sx = panelOpen() ? null : e.touches[0].clientX; }, { passive: true });
   lb.addEventListener('touchend', function (e) {
     if (sx === null) return;
     var dx = e.changedTouches[0].clientX - sx; sx = null;
     if (Math.abs(dx) > 50) openLb(gal.idx + (dx < 0 ? 1 : -1));
   }, { passive: true });
+
+  // ---------- Hearts & comments ----------
+  var LIKED_KEY = 'mm_liked', NAME_KEY = 'mm_name';
+  function store(k, v) { try { if (v === undefined) return window.localStorage.getItem(k); window.localStorage.setItem(k, v); } catch (e) { return null; } }
+  var liked = {};
+  try { liked = JSON.parse(store(LIKED_KEY) || '{}') || {}; } catch (e) { liked = {}; }
+  function saveLiked() { store(LIKED_KEY, JSON.stringify(liked)); }
+
+  function updateTile(it) {
+    if (!it.tile) return;
+    var h = it.hearts || 0, c = it.ncom || 0, parts = [];
+    if (h) parts.push('\u2665 ' + h);
+    if (c) parts.push('\u2709 ' + c);
+    it.tile.querySelector('.rx').textContent = parts.join('  ');
+  }
+  var heartBtn = $('heartBtn'), heartN = $('heartN'), comBtn = $('comBtn'), comN = $('comN');
+  function renderActs(it) {
+    heartN.textContent = it.hearts || 0;
+    comN.textContent = it.ncom || 0;
+    setClass(heartBtn, 'on', !!liked[it.id]);
+  }
+  function current() { return gal.items[gal.idx]; }
+
+  function toggleHeart(forceOn) {
+    var it = current(); if (!it) return;
+    var on = !!liked[it.id];
+    if (forceOn && on) return;          // double-tap only adds a heart, never removes
+    var delta = on ? -1 : 1;
+    if (on) delete liked[it.id]; else liked[it.id] = 1;
+    saveLiked();
+    it.hearts = Math.max(0, (it.hearts || 0) + delta);
+    renderActs(it); updateTile(it);
+    setClass(heartBtn, 'pop', false); void heartBtn.offsetWidth; if (delta > 0) setClass(heartBtn, 'pop', true);
+    api({ action: 'heart', id: it.id, delta: delta }).then(function (r) {
+      it.hearts = r.hearts; if (current() === it) renderActs(it); updateTile(it);
+    }, function () {});
+  }
+  heartBtn.onclick = function (e) { e.stopPropagation(); toggleHeart(false); };
+
+  // Double-tap the photo to heart it (like Instagram)
+  var burst = $('burst'), lastTap = 0;
+  function showBurst() { setClass(burst, 'go', false); void burst.getBoundingClientRect(); setClass(burst, 'go', true); }
+  lbStage.addEventListener('touchend', function (e) {
+    var now = Date.now();
+    if (now - lastTap < 300) { e.preventDefault(); showBurst(); toggleHeart(true); lastTap = 0; } else lastTap = now;
+  });
+  lbStage.addEventListener('dblclick', function () { showBurst(); toggleHeart(true); });
+
+  // Comments panel
+  var cpanel = $('cpanel'), cpList = $('cpList'), cpForm = $('cpForm'), cpName = $('cpName'), cpText = $('cpText'), cpSend = $('cpSend');
+  function panelOpen() { return /\bon\b/.test(cpanel.className); }
+  function closePanel() { setClass(cpanel, 'on', false); }
+  function fmtAgo(iso) {
+    var s = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (!(s >= 0)) return '';
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+  function renderComments(list) {
+    if (!list || !list.length) { cpList.innerHTML = '<div class="cp-empty">No comments yet &mdash; be the first!</div>'; return; }
+    var h = '';
+    for (var i = 0; i < list.length; i++) h += '<div class="cm"><b>' + esc(list[i].n) + '</b>' + esc(list[i].t) + '<small>' + esc(fmtAgo(list[i].at)) + '</small></div>';
+    cpList.innerHTML = h;
+    cpList.scrollTop = cpList.scrollHeight;
+  }
+  comBtn.onclick = function (e) {
+    e.stopPropagation();
+    var it = current(); if (!it) return;
+    cpName.value = cpName.value || store(NAME_KEY) || $('guest').value || '';
+    cpList.innerHTML = '<div class="cp-empty">Loading&hellip;</div>';
+    setClass(cpanel, 'on', true);
+    api({ action: 'comments', id: it.id }).then(function (r) { if (current() === it) renderComments(r.comments); },
+      function () { cpList.innerHTML = '<div class="cp-empty">Couldn\'t load comments. Please try again.</div>'; });
+  };
+  $('cpX').onclick = function (e) { e.stopPropagation(); closePanel(); };
+  cpanel.onclick = function (e) { e.stopPropagation(); };
+  cpForm.onsubmit = function (e) {
+    e.preventDefault();
+    var it = current(), text = cpText.value.replace(/^\s+|\s+$/g, ''), name = cpName.value.replace(/^\s+|\s+$/g, '');
+    if (!it || !text) return;
+    if (name) store(NAME_KEY, name);
+    cpSend.disabled = true;
+    api({ action: 'comment', id: it.id, name: name, text: text }).then(function (r) {
+      cpText.value = '';
+      it.ncom = r.comments.length; renderActs(it); updateTile(it);
+      if (current() === it) renderComments(r.comments);
+    }, function () { cpText.placeholder = 'Didn\u2019t go through \u2014 please try again'; })
+    .then(function () { cpSend.disabled = false; });
+  };
 
   loadGallery(true);
 </script>
